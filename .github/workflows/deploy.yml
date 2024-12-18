@@ -1,5 +1,6 @@
 name: Deploy ADF and Databricks
 
+
 on:
   push:
     branches:
