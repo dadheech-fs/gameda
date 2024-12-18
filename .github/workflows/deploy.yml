@@ -3,6 +3,7 @@ name: Deploy ADF and Databricks
 on:
   push:
     branches:
+      - clean-branch
       - main
 
 jobs:
