@@ -1,0 +1,53 @@
+name: Deploy ADF and Databricks
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-databricks-notebooks:
+    name: Deploy Notebooks to Databricks
+    runs-on: self-hosted  # Use your self-hosted runner
+    env:
+      LOCAL_NOTEBOOKS_DIR: ${{ github.workspace }}/databricks/notebooks
+      DATABRICKS_HOST: https://${{ secrets.DATABRICKS_URL }}
+      DATABRICKS_WORKSPACE_DIR: "/repos/adf-databricks/notebooks"
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Databricks CLI
+        run: pip install databricks-cli
+
+      - name: Deploy Notebooks to Databricks
+        run: |
+          databricks configure --token <<< "${{ secrets.DATABRICKS_URL }}
+          ${{ secrets.DATABRICKS_TOKEN }}"
+          databricks workspace import-dir "$LOCAL_NOTEBOOKS_DIR" "$DATABRICKS_WORKSPACE_DIR" --overwrite
+
+  deploy-adf-assets:
+    name: Deploy Azure Data Factory Assets
+    runs-on: self-hosted  # Use your self-hosted runner
+    needs: deploy-databricks-notebooks
+    env:
+      RESOURCE_GROUP: resource_free
+      ADF_NAME: abhijeet030789adf1
+      ASSETS_DIR: ${{ github.workspace }}/adf
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      KEYVAULT_BASEURL: https://abhijeet030789keyvault.vault.azure.net/
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set execute permissions for deploy-adf.sh
+        run: chmod +x ./scripts/deploy-adf.sh
+
+      - name: Run deploy-adf.sh
+        run: ./scripts/deploy-adf.sh
