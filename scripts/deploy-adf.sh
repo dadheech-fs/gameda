@@ -23,7 +23,7 @@ replace_placeholders() {
     local temp_file=$(mktemp)
     cp "$input_file" "$temp_file"
 
-    # Find all placeholders in the file using awk instead of grep -oP
+    # Find all placeholders in the file using awk
     PLACEHOLDERS=$(awk '{ while (match($0, /@@[A-Z0-9_]+@@/)) { 
                             print substr($0, RSTART+2, RLENGTH-4); 
                             $0 = substr($0, RSTART+RLENGTH);
@@ -35,13 +35,14 @@ replace_placeholders() {
         env_var_value="${!placeholder}"
         if [ -z "$env_var_value" ]; then
             echo "Error: Environment variable '$placeholder' is not set but required in $input_file."
-            exit 1  # Exit with an error if the environment variable is not defined
+            exit 1
         fi
-        echo "Replacing @@$placeholder@@ with $env_var_value in $input_file"
-        sed -i "s|@@$placeholder@@|$env_var_value|g" "$temp_file"
+        echo "Replacing @@$placeholder@@ with $env_var_value in $temp_file"
+        # Use -e and properly quote the file paths
+        sed -i -e "s|@@$placeholder@@|$env_var_value|g" "$temp_file"
     done
 
-    echo "$temp_file"  # Return the path to the temporary file
+    echo "$temp_file"  # Return the processed file path
 }
 
 echo "Starting deployment of Azure Data Factory assets..."
