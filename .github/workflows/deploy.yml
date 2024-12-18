@@ -1,5 +1,7 @@
 name: Deploy ADF and Databricks
 
+runs-on: self-hosted
+
 on:
   push:
     branches:
