@@ -1,0 +1,39 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Azure CLI
+      - name: Set up Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Step 3: Deploy ADF assets
+      - name: Deploy ADF assets
+        run: |
+          bash ./scripts/deploy-adf.sh
+
+      # Step 4: Set up Databricks CLI
+      - name: Configure Databricks CLI
+        run: |
+          databricks configure --token << EOF
+          ${{ secrets.DATABRICKS_HOST }}
+          ${{ secrets.DATABRICKS_TOKEN }}
+          EOF
+
+      # Step 5: Deploy Databricks notebooks
+      - name: Deploy Databricks notebooks
+        run: |
+          bash ./scripts/deploy-databricks.sh
