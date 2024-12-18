@@ -25,6 +25,7 @@ jobs:
 
       - name: Deploy Notebooks to Databricks
         run: |
+          echo "DATABRICKS_HOST= ${DATABRICKS_HOST}"
           databricks workspace import-dir "$LOCAL_NOTEBOOKS_DIR" "$DATABRICKS_WORKSPACE_DIR" --overwrite
 
   deploy-adf-assets:
