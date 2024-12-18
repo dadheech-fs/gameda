@@ -22,11 +22,11 @@ replace_placeholders() {
     local input_file=$1
     local temp_file=$(mktemp)
 
-    # Copy the original file to a temporary location
+    # Copy the input file to a temporary file
     cp "$input_file" "$temp_file"
 
-    # Find all placeholders (e.g., @@PLACEHOLDER@@) in the file
-    PLACEHOLDERS=$(grep -oP '@@\K[A-Z0-9_]+(?=@@)' "$temp_file" | sort -u)
+    # Find all placeholders (e.g., @@PLACEHOLDER@@) using awk
+    PLACEHOLDERS=$(awk '{while (match($0, /@@[A-Z0-9_]+@@/)) {print substr($0, RSTART+2, RLENGTH-4); $0=substr($0, RSTART+RLENGTH)}}' "$temp_file" | sort -u)
 
     # Replace placeholders with corresponding environment variables
     for placeholder in $PLACEHOLDERS; do
@@ -38,12 +38,12 @@ replace_placeholders() {
         fi
         echo "Replacing @@$placeholder@@ with $env_var_value in $temp_file"
 
-        # Safely replace using sed without modifying file paths
+        # Use sed for replacement (works for macOS and Linux)
         sed -i.bak "s|@@$placeholder@@|$env_var_value|g" "$temp_file"
-        rm -f "${temp_file}.bak"  # Cleanup backup file created by sed on macOS
+        rm -f "${temp_file}.bak"  # Remove backup file created by sed
     done
 
-    echo "$temp_file"  # Return the path to the processed temporary file
+    echo "$temp_file"  # Return the path to the temporary processed file
 }
 
 echo "Starting deployment of Azure Data Factory assets..."
