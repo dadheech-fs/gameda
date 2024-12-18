@@ -21,28 +21,29 @@ echo "Azure CLI Login Successful!"
 replace_placeholders() {
     local input_file=$1
     local temp_file=$(mktemp)
+
+    # Copy the original file to a temporary location
     cp "$input_file" "$temp_file"
 
-    # Find all placeholders in the file using awk
-    PLACEHOLDERS=$(awk '{ while (match($0, /@@[A-Z0-9_]+@@/)) { 
-                            print substr($0, RSTART+2, RLENGTH-4); 
-                            $0 = substr($0, RSTART+RLENGTH);
-                          }
-                        }' "$temp_file" | sort -u)
+    # Find all placeholders (e.g., @@PLACEHOLDER@@) in the file
+    PLACEHOLDERS=$(grep -oP '@@\K[A-Z0-9_]+(?=@@)' "$temp_file" | sort -u)
 
     # Replace placeholders with corresponding environment variables
     for placeholder in $PLACEHOLDERS; do
         env_var_value="${!placeholder}"
         if [ -z "$env_var_value" ]; then
             echo "Error: Environment variable '$placeholder' is not set but required in $input_file."
+            rm "$temp_file"
             exit 1
         fi
         echo "Replacing @@$placeholder@@ with $env_var_value in $temp_file"
-        # Use -e and properly quote the file paths
-        sed -i -e "s|@@$placeholder@@|$env_var_value|g" "$temp_file"
+
+        # Safely replace using sed without modifying file paths
+        sed -i.bak "s|@@$placeholder@@|$env_var_value|g" "$temp_file"
+        rm -f "${temp_file}.bak"  # Cleanup backup file created by sed on macOS
     done
 
-    echo "$temp_file"  # Return the processed file path
+    echo "$temp_file"  # Return the path to the processed temporary file
 }
 
 echo "Starting deployment of Azure Data Factory assets..."
