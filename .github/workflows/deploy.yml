@@ -25,7 +25,7 @@ jobs:
 
       - name: Deploy Notebooks to Databricks
         run: |
-          databricks configure --token <<< "${{ secrets.DATABRICKS_URL }}
+          databricks configure --token <<< "${DATABRICKS_HOST}"
           ${{ secrets.DATABRICKS_TOKEN }}"
           databricks workspace import-dir "$LOCAL_NOTEBOOKS_DIR" "$DATABRICKS_WORKSPACE_DIR" --overwrite
 
