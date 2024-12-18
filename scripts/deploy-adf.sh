@@ -23,8 +23,12 @@ replace_placeholders() {
     local temp_file=$(mktemp)
     cp "$input_file" "$temp_file"
 
-    # Find all placeholders in the file
-    PLACEHOLDERS=$(grep -oP '@@\K[A-Z0-9_]+(?=@@)' "$temp_file" | sort -u)
+    # Find all placeholders in the file using awk instead of grep -oP
+    PLACEHOLDERS=$(awk '{ while (match($0, /@@[A-Z0-9_]+@@/)) { 
+                            print substr($0, RSTART+2, RLENGTH-4); 
+                            $0 = substr($0, RSTART+RLENGTH);
+                          }
+                        }' "$temp_file" | sort -u)
 
     # Replace placeholders with corresponding environment variables
     for placeholder in $PLACEHOLDERS; do
